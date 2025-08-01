@@ -5,7 +5,8 @@ from sqlalchemy import or_
 from database import get_db_session  # Refactor: get_db yerine get_db_session kullanılıyor
 from models import Product as ProductModel
 from schemas import Product
-from ai_models.intent_analyzer import analyze_prompt_intent
+from ai_models.kombin_generator import generate_kombin_recipe
+from ai_models.kombin_rules import ANAHTAR_KELİMELER, KOMBİN_KURALLARI, KATEGORILER, RENK_UYUMU_KURALLARI
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -46,7 +47,14 @@ def recommend_products(request: RecommendationRequest, db: Session = Depends(get
     """
     try:
         # Kullanıcı metninden stil ve tür etiketlerini çıkar
-        intent_result = analyze_prompt_intent(request.text)
+        intent_result = generate_kombin_recipe(
+            cumle=request.text,
+            anahtar_kelimeler_dict=ANAHTAR_KELİMELER,
+            kombin_kurallari_dict=KOMBİN_KURALLARI,
+            kategoriler_dict=KATEGORILER,
+            renk_uyumu_dict=RENK_UYUMU_KURALLARI,
+            cinsiyet="kadin"  # Varsayılan olarak kadın
+        )
         
         # Çıkarılan etiketleri birleştir (stil + tür)
         search_terms = []
