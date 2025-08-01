@@ -1,12 +1,19 @@
 from pydantic import BaseModel
-from typing import Optional
 
 class Product(BaseModel):
-    id: int
-    name: str
-    description: Optional[str] = None
-    price: float
-    image_url: Optional[str] = None
+    """
+    API üzerinden döndürülecek ürün nesnesinin şeması.
+    Bu şema, veritabanından okunan verinin formatını ve API'den dönen yapıyı belirler.
+    """
+    id: int               # Ürün ID'si
+    name: str             # Ürün adı
+    description: str      # Ürün açıklaması
+    price: float          # Ürün fiyatı
+    image_url: str        # Ürün resim linki
 
     class Config:
-        from_attributes = True 
+        """
+        Pydantic konfigürasyonu: Veritabanı objelerini JSON'a dönüştürürken kullanılır.
+        orm_mode=True ile SQLAlchemy modelleri doğrudan kullanılabilir.
+        """
+        orm_mode = True
