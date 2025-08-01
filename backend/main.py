@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from typing import List
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
-from database import get_db_session  # Refactor: get_db yerine get_db_session kullanılıyor
+from database import get_db_session, engine, Base
 from models import Product as ProductModel
 from schemas import Product
 from ai_models.kombin_generator import generate_kombin_recipe
@@ -10,6 +10,78 @@ from ai_models.kombin_rules import ANAHTAR_KELİMELER, KOMBİN_KURALLARI, KATEGO
 from pydantic import BaseModel
 
 app = FastAPI()
+
+# Veritabanı tablolarını oluştur
+Base.metadata.create_all(bind=engine)
+
+# Test verileri ekle
+def add_test_data():
+    db = next(get_db_session())
+    try:
+        # Eğer ürün yoksa test verileri ekle
+        if db.query(ProductModel).count() == 0:
+            test_products = [
+                ProductModel(
+                    name="Klasik Beyaz Gömlek",
+                    description="Klasik kesim beyaz gömlek, ofis ve günlük kullanım için ideal",
+                    price=150.0,
+                    category="Gömlek"
+                ),
+                ProductModel(
+                    name="Siyah Kot Pantolon",
+                    description="Rahat kesim siyah kot pantolon, her türlü kombin için uygun",
+                    price=200.0,
+                    category="Pantolon"
+                ),
+                ProductModel(
+                    name="Mavi Blazer Ceket",
+                    description="Şık mavi blazer ceket, resmi ve yarı resmi ortamlar için",
+                    price=350.0,
+                    category="Ceket"
+                ),
+                ProductModel(
+                    name="Kırmızı Elbise",
+                    description="Göz alıcı kırmızı elbise, özel günler için mükemmel",
+                    price=280.0,
+                    category="Elbise"
+                )
+            ]
+            db.add_all(test_products)
+            db.commit()
+            print("Test verileri eklendi!")
+        else:
+            print("Test verileri zaten mevcut!")
+    except Exception as e:
+        print(f"Test verileri eklenirken hata: {e}")
+    finally:
+        db.close()
+
+# Uygulama başladığında test verilerini ekle
+@app.on_event("startup")
+async def startup_event():
+    print("Uygulama başlatılıyor...")
+    add_test_data()
+
+@app.get("/test")
+def test_endpoint():
+    """Test endpoint'i - veritabanı bağlantısını kontrol eder"""
+    db = next(get_db_session())
+    try:
+        count = db.query(ProductModel).count()
+        return {"message": f"Veritabanında {count} ürün var"}
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        db.close()
+
+@app.post("/add-test-data")
+def add_test_data_endpoint():
+    """Manuel olarak test verilerini ekler"""
+    try:
+        add_test_data()
+        return {"message": "Test verileri eklendi!"}
+    except Exception as e:
+        return {"error": str(e)}
 
 # Request model for /recommend endpoint
 class RecommendationRequest(BaseModel):

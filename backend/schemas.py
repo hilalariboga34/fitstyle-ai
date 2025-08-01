@@ -9,6 +9,7 @@ class Product(BaseModel):
     name: str             # Ürün adı
     description: str      # Ürün açıklaması
     price: float          # Ürün fiyatı
+    category: str         # Ürün kategorisi
     image_url: str        # Ürün resim linki
 
     class Config:

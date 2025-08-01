@@ -1,20 +1,41 @@
 import React, { useState } from "react";
+import axios from "axios";
 
-function ChatPanel() {
+function ChatPanel({ setProducts, setIsLoading, setError }) {
   const [messages, setMessages] = useState([
     { text: "Hoş geldiniz!", from: "bot" }
   ]);
   const [input, setInput] = useState("");
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
     if (input.trim() === "") return;
-    setMessages([...messages, { text: input, from: "user" }]);
+
+    const userMessage = input.trim();
+    setMessages(prev => [...prev, { text: userMessage, from: "user" }]);
     setInput("");
-    // 1 saniye sonra sahte AI yanıtı ekle
-    setTimeout(() => {
-      setMessages((prev) => [...prev, { text: "Bu bir AI yanıtıdır.", from: "bot" }]);
-    }, 1000);
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await axios.post("http://localhost:8000/recommend", {
+        text: userMessage,
+        cinsiyet: "kadin",
+      });
+
+      const productList = response.data;
+      setProducts(productList);
+      setIsLoading(false);
+      
+      // Bot yanıtı ekle
+      setMessages(prev => [...prev, { text: "Size özel ürünler bulundu!", from: "bot" }]);
+    } catch (error) {
+      console.error("API isteği başarısız:", error);
+      setIsLoading(false);
+      setError("Öneriler yüklenirken bir hata oluştu.");
+      setMessages(prev => [...prev, { text: "Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.", from: "bot" }]);
+    }
   };
 
   return (

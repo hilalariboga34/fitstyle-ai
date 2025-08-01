@@ -12,5 +12,6 @@ class Product(Base):
     name = Column(String, index=True)                  # Ürün adı
     description = Column(String)                       # Ürün açıklaması
     price = Column(Float)                              # Ürün fiyatı
+    category = Column(String)                          # Ürün kategorisi
     image_url = Column(String)                         # Ürün resim linki
     # Not: Gerekirse burada yeni alanlar eklenebilir.

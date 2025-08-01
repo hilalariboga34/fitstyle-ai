@@ -1,54 +1,6 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React from "react";
 
-// API'den ürünleri getiren async fonksiyon
-const fetchProductsFromAPI = async () => {
-  try {
-    const response = await axios.get('http://localhost:8000/products');
-    return response.data;
-  } catch (error) {
-    throw new Error('Ürünler yüklenirken bir hata oluştu: ' + error.message);
-  }
-};
-
-function ProductGrid() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const loadProducts = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const productsData = await fetchProductsFromAPI();
-        setProducts(productsData);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadProducts();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-lg text-gray-600">Yükleniyor...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-lg text-red-600">{error}</div>
-      </div>
-    );
-  }
-
+function ProductGrid({ products, setProducts }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
       {products.map((product) => (
