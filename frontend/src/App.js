@@ -42,7 +42,7 @@ function App() {
               <div className="bg-white rounded-lg shadow-md p-6 w-full flex flex-col h-[600px]">
                 <h2 className="text-2xl font-semibold mb-4 text-gray-800">Sol Panel</h2>
                 {/* Sohbet paneli burada */}
-                <ChatPanel setProducts={setProducts} setIsLoading={setIsLoading} setError={setError} />
+                <ChatPanel setProducts={setProducts} />
               </div>
             </div>
 

@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
@@ -10,6 +11,15 @@ from ai_models.kombin_rules import ANAHTAR_KELİMELER, KOMBİN_KURALLARI, KATEGO
 from pydantic import BaseModel
 
 app = FastAPI()
+
+# CORS middleware ekle
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],  # Frontend URL'leri
+    allow_credentials=True,
+    allow_methods=["*"],  # Tüm HTTP metodlarına izin ver
+    allow_headers=["*"],  # Tüm header'lara izin ver
+)
 
 # Veritabanı tablolarını oluştur
 Base.metadata.create_all(bind=engine)
