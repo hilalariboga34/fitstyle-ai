@@ -18,8 +18,27 @@ function ProductGrid({ products, setProducts }) {
       {products.map((product) => (
         <div 
           key={product.id} 
-          className="bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 p-6 flex flex-col"
+          className="bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 p-6 flex flex-col relative"
         >
+          {/* Kalp İkonu - Sağ Üst Köşe */}
+          <div className="absolute top-4 right-4 z-10">
+            <button className="w-8 h-8 bg-white bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all duration-200 shadow-sm hover:shadow-md">
+              <svg 
+                className="w-5 h-5 text-gray-400 hover:text-red-500 transition-colors duration-200" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" 
+                />
+              </svg>
+            </button>
+          </div>
+
           {/* Ürün resmi */}
           <div className="w-full h-48 mb-4 rounded-lg overflow-hidden bg-gray-100">
             {product.image_url ? (
