@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordRequestForm
 from typing import List
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_  # Bu satır önemli
 from database import get_db_session, engine, Base
 from models import Product as ProductModel, User as UserModel, Favorite as FavoriteModel
 from schemas import Product
@@ -14,6 +14,12 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta
 import jwt
 from typing import Optional
+import logging # Loglama için eklendi
+
+# Basit bir loglama yapılandırması
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 app = FastAPI()
 
@@ -38,19 +44,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 # JWT token'dan kullanıcı alma fonksiyonu
 def get_current_user(token: str = Depends(HTTPBearer()), db: Session = Depends(get_db_session)):
-    """
-    JWT token'dan kullanıcı bilgilerini çıkarır ve veritabanından kullanıcıyı döndürür.
-    
-    Args:
-        token (str): JWT token
-        db (Session): SQLAlchemy veritabanı oturumu
-        
-    Returns:
-        UserModel: Mevcut kullanıcı
-        
-    Raises:
-        HTTPException: Token geçersizse veya kullanıcı bulunamazsa
-    """
     credentials_exception = HTTPException(
         status_code=401,
         detail="Geçersiz kimlik bilgileri",
@@ -58,7 +51,6 @@ def get_current_user(token: str = Depends(HTTPBearer()), db: Session = Depends(g
     )
     
     try:
-        # Token'ı decode et
         payload = jwt.decode(token.credentials, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
@@ -66,7 +58,6 @@ def get_current_user(token: str = Depends(HTTPBearer()), db: Session = Depends(g
     except jwt.PyJWTError:
         raise credentials_exception
     
-    # Kullanıcıyı veritabanından bul
     user = db.query(UserModel).filter(UserModel.email == email).first()
     if user is None:
         raise credentials_exception
@@ -122,7 +113,6 @@ Base.metadata.create_all(bind=engine)
 def add_test_data():
     db = next(get_db_session())
     try:
-        # Eğer ürün yoksa test verileri ekle
         if db.query(ProductModel).count() == 0:
             test_products = [
                 ProductModel(
@@ -148,6 +138,12 @@ def add_test_data():
                     description="Göz alıcı kırmızı elbise, özel günler için mükemmel",
                     price=280.0,
                     category="Elbise"
+                ),
+                 ProductModel(
+                    name="Gri Triko Kazak",
+                    description="Sıcak ve şık gri triko kazak, kış ayları için ideal",
+                    price=120.0,
+                    category="Kazak"
                 )
             ]
             db.add_all(test_products)
@@ -168,7 +164,6 @@ async def startup_event():
 
 @app.get("/test")
 def test_endpoint():
-    """Test endpoint'i - veritabanı bağlantısını kontrol eder"""
     db = next(get_db_session())
     try:
         count = db.query(ProductModel).count()
@@ -180,7 +175,6 @@ def test_endpoint():
 
 @app.post("/add-test-data")
 def add_test_data_endpoint():
-    """Manuel olarak test verilerini ekler"""
     try:
         add_test_data()
         return {"message": "Test verileri eklendi!"}
@@ -189,35 +183,18 @@ def add_test_data_endpoint():
 
 @app.post("/register", response_model=UserResponse)
 def register(user: UserCreate, db: Session = Depends(get_db_session)):
-    """
-    Yeni kullanıcı kaydı oluşturur.
-    
-    Args:
-        user (UserCreate): Kullanıcı bilgileri (email, password)
-        db (Session): SQLAlchemy veritabanı oturumu
-        
-    Returns:
-        UserResponse: Oluşturulan kullanıcı bilgileri
-        
-    Raises:
-        HTTPException: Email zaten kullanılıyorsa veya başka bir hata olursa
-    """
     try:
-        # Email'in zaten kullanılıp kullanılmadığını kontrol et
         existing_user = db.query(UserModel).filter(UserModel.email == user.email).first()
         if existing_user:
             raise HTTPException(status_code=400, detail="Bu email adresi zaten kullanılıyor")
         
-        # Şifreyi hash'le
         hashed_password = get_password_hash(user.password)
         
-        # Yeni kullanıcı oluştur
         new_user = UserModel(
             email=user.email,
             hashed_password=hashed_password
         )
         
-        # Veritabanına kaydet
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
@@ -232,31 +209,15 @@ def register(user: UserCreate, db: Session = Depends(get_db_session)):
 
 @app.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db_session)):
-    """
-    Kullanıcı girişi yapar ve JWT token döndürür.
-    
-    Args:
-        form_data (OAuth2PasswordRequestForm): Kullanıcı giriş bilgileri (username, password)
-        db (Session): SQLAlchemy veritabanı oturumu
-        
-    Returns:
-        Token: JWT access token
-        
-    Raises:
-        HTTPException: Email veya şifre yanlışsa
-    """
     try:
-        # Kullanıcıyı email ile bul (username alanı email olarak kullanılıyor)
         user = db.query(UserModel).filter(UserModel.email == form_data.username).first()
         
         if not user:
             raise HTTPException(status_code=401, detail="Email veya şifre yanlış")
         
-        # Şifreyi doğrula
         if not verify_password(form_data.password, user.hashed_password):
             raise HTTPException(status_code=401, detail="Email veya şifre yanlış")
         
-        # JWT token oluştur
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
             data={"sub": user.email}, expires_delta=access_token_expires
@@ -275,27 +236,11 @@ def add_to_favorites(
     current_user: UserModel = Depends(get_current_user),
     db: Session = Depends(get_db_session)
 ):
-    """
-    Kullanıcının favorilerine ürün ekler.
-    
-    Args:
-        favorite (FavoriteCreate): Eklenecek ürün bilgileri (product_id)
-        current_user (UserModel): JWT token'dan alınan mevcut kullanıcı
-        db (Session): SQLAlchemy veritabanı oturumu
-        
-    Returns:
-        FavoriteResponse: Başarı mesajı
-        
-    Raises:
-        HTTPException: Ürün bulunamazsa veya zaten favorilerde varsa
-    """
     try:
-        # Ürünün var olup olmadığını kontrol et
         product = db.query(ProductModel).filter(ProductModel.id == favorite.product_id).first()
         if not product:
             raise HTTPException(status_code=404, detail="Ürün bulunamadı")
         
-        # Ürünün zaten favorilerde olup olmadığını kontrol et
         existing_favorite = db.query(FavoriteModel).filter(
             FavoriteModel.user_id == current_user.id,
             FavoriteModel.product_id == favorite.product_id
@@ -304,13 +249,11 @@ def add_to_favorites(
         if existing_favorite:
             raise HTTPException(status_code=400, detail="Bu ürün zaten favorilerinizde")
         
-        # Yeni favori kaydı oluştur
         new_favorite = FavoriteModel(
             user_id=current_user.id,
             product_id=favorite.product_id
         )
         
-        # Veritabanına kaydet
         db.add(new_favorite)
         db.commit()
         
@@ -327,18 +270,7 @@ def get_favorites(
     current_user: UserModel = Depends(get_current_user),
     db: Session = Depends(get_db_session)
 ):
-    """
-    Kullanıcının favori ürünlerini döndürür.
-    
-    Args:
-        current_user (UserModel): JWT token'dan alınan mevcut kullanıcı
-        db (Session): SQLAlchemy veritabanı oturumu
-        
-    Returns:
-        List[Product]: Kullanıcının favori ürünlerinin listesi
-    """
     try:
-        # Kullanıcının favori ürünlerini join ile çek
         favorites = db.query(ProductModel).join(
             FavoriteModel, ProductModel.id == FavoriteModel.product_id
         ).filter(
@@ -356,22 +288,7 @@ def remove_from_favorites(
     current_user: UserModel = Depends(get_current_user),
     db: Session = Depends(get_db_session)
 ):
-    """
-    Kullanıcının favorilerinden ürün siler.
-    
-    Args:
-        product_id (int): Silinecek ürünün ID'si
-        current_user (UserModel): JWT token'dan alınan mevcut kullanıcı
-        db (Session): SQLAlchemy veritabanı oturumu
-        
-    Returns:
-        dict: Başarı mesajı
-        
-    Raises:
-        HTTPException: Ürün favorilerde bulunamazsa
-    """
     try:
-        # Kullanıcının bu ürünü favorilerde olup olmadığını kontrol et
         favorite = db.query(FavoriteModel).filter(
             FavoriteModel.user_id == current_user.id,
             FavoriteModel.product_id == product_id
@@ -380,7 +297,6 @@ def remove_from_favorites(
         if not favorite:
             raise HTTPException(status_code=404, detail="Bu ürün favorilerinizde bulunamadı")
         
-        # Favori kaydını sil
         db.delete(favorite)
         db.commit()
         
@@ -392,41 +308,24 @@ def remove_from_favorites(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Favori silme işlemi başarısız: {str(e)}")
 
-# Request model for /recommend endpoint
 class RecommendationRequest(BaseModel):
-    """
-    /recommend endpoint'i için gelen JSON isteğinin şeması.
-    """
-    text: str  # Kullanıcının girdiği metin
+    text: str
 
 @app.get("/products", response_model=List[Product])
 def get_products(db: Session = Depends(get_db_session)):
-    """
-    Veritabanındaki tüm ürünleri döndürür.
-    Args:
-        db (Session): SQLAlchemy veritabanı oturumu (dependency injection ile gelir)
-    Returns:
-        List[Product]: Tüm ürünlerin listesi
-    """
-    # Tüm ürünleri sorgula ve döndür
     return db.query(ProductModel).all()
 
+# ===================================================================
+# DÜZELTİLMİŞ /recommend FONKSİYONU
+# ===================================================================
 @app.post("/recommend", response_model=List[Product])
 def recommend_products(request: RecommendationRequest, db: Session = Depends(get_db_session)):
     """
     Kullanıcı metnine göre ürün önerisi yapar.
-    
-    Args:
-        request (RecommendationRequest): Kullanıcının girdiği metin
-        db (Session): SQLAlchemy veritabanı oturumu
-        
-    Returns:
-        List[Product]: Önerilen ürünlerin listesi
-        
-    Raises:
-        HTTPException: Metin analizi başarısız olursa
     """
     try:
+        logger.info(f"Gelen istek: {request.text}")
+        
         # Kullanıcı metninden stil ve tür etiketlerini çıkar
         intent_result = generate_kombin_recipe(
             cumle=request.text,
@@ -437,33 +336,41 @@ def recommend_products(request: RecommendationRequest, db: Session = Depends(get
             cinsiyet="kadin"  # Varsayılan olarak kadın
         )
         
+        logger.info(f"AI sonucu: {intent_result}")
+
         # Çıkarılan etiketleri birleştir (stil + tür)
         search_terms = []
-        search_terms.extend(intent_result.get('style', []))
-        search_terms.extend(intent_result.get('type', []))
+        if intent_result.get('style'):
+            search_terms.extend(intent_result.get('style'))
+        if intent_result.get('type'):
+            # "kombin" kelimesini arama terimlerinden çıkaralım, çünkü bu genel bir ifade
+            search_terms.extend([term for term in intent_result.get('type') if term != 'kombin'])
         
-        # Eğer hiç etiket bulunamadıysa, tüm ürünleri döndür
+        logger.info(f"Arama terimleri: {search_terms}")
+
+        # Eğer hiç anlamlı etiket bulunamadıysa, tüm ürünleri döndür
         if not search_terms:
+            logger.info("Anlamlı etiket bulunamadı, tüm ürünler döndürülüyor.")
             return db.query(ProductModel).all()
         
-        # Veritabanında description sütununda ILIKE sorgusu yap
-        # Her bir etiket için OR koşulu kullan
-        query = db.query(ProductModel)
+        # Her bir arama terimi için bir LIKE koşulu oluştur (OR mantığı)
+        conditions = [ProductModel.description.like(f'%{term}%') for term in search_terms]
         
-        # ILIKE sorgularını oluştur (büyük/küçük harf duyarsız)
-        ilike_conditions = []
-        for term in search_terms:
-            ilike_conditions.append(ProductModel.description.ilike(f'%{term}%'))
+        # Koşulları OR mantığı ile birleştirerek sorguyu çalıştır
+        filtered_products = db.query(ProductModel).filter(or_(*conditions)).all()
         
-        # Tüm koşulları OR ile birleştir
-        if ilike_conditions:
-            query = query.filter(or_(*ilike_conditions))
-        
-        # Filtrelenmiş ürünleri döndür
-        recommended_products = query.all()
-        
-        return recommended_products
+        logger.info(f"{len(filtered_products)} adet filtrelenmiş ürün bulundu.")
+
+        # Eğer OR ile bile sonuç bulunamazsa, kullanıcıya boş bir ekran göstermek yerine
+        # yine de tüm ürünleri döndürelim ki bir şeyler görsün.
+        if not filtered_products:
+            logger.info("Filtreleme sonucu ürün bulunamadı, tüm ürünler döndürülüyor.")
+            return db.query(ProductModel).all()
+
+        return filtered_products
         
     except Exception as e:
+        logger.error(f"Öneri oluşturulurken hata: {e}", exc_info=True)
         # Hata durumunda 500 hatası döndür
-        raise HTTPException(status_code=500, detail=f"Ürün önerisi oluşturulurken hata: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ürün önerisi oluşturulurken bir sunucu hatası oluştu: {str(e)}")
+

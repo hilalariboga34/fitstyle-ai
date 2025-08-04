@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios"; // axios'u import etmeyi unutmuyoruz
 
 function ChatPanel({ setProducts }) {
   const [messages, setMessages] = useState([
@@ -19,55 +20,34 @@ function ChatPanel({ setProducts }) {
     setIsLoading(true);
     setError(null);
 
-    // Basit mock response
-    setTimeout(() => {
-      const mockProducts = [
-        {
-          id: 1,
-          name: "Klasik Beyaz Gömlek",
-          description: "Klasik kesim beyaz gömlek, ofis ve günlük kullanım için ideal",
-          price: 150.0,
-          category: "Gömlek",
-          image_url: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400&h=400&fit=crop"
-        },
-        {
-          id: 2,
-          name: "Siyah Kot Pantolon",
-          description: "Rahat kesim siyah kot pantolon, her türlü kombin için uygun",
-          price: 200.0,
-          category: "Pantolon",
-          image_url: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&h=400&fit=crop"
-        },
-        {
-          id: 3,
-          name: "Mavi Blazer Ceket",
-          description: "Şık mavi blazer ceket, resmi ve yarı resmi ortamlar için",
-          price: 350.0,
-          category: "Ceket",
-          image_url: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400&h=400&fit=crop"
-        },
-        {
-          id: 4,
-          name: "Kırmızı Elbise",
-          description: "Göz alıcı kırmızı elbise, özel günler için mükemmel",
-          price: 280.0,
-          category: "Elbise",
-          image_url: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=400&h=400&fit=crop"
-        },
-        {
-          id: 5,
-          name: "Gri Triko Kazak",
-          description: "Sıcak ve şık gri triko kazak, kış ayları için ideal",
-          price: 120.0,
-          category: "Kazak",
-          image_url: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop"
-        }
-      ];
+    // ===================================================================
+    // ESKİ setTimeout BLOĞU KALDIRILDI, YERİNE GERÇEK API İSTEĞİ GELDİ
+    // ===================================================================
+    try {
+      // Backend'deki /recommend endpoint'ine POST isteği gönderiyoruz
+      const response = await axios.post('http://localhost:8000/recommend', {
+        text: userMessage 
+      });
+
+      // Başarılı olursa, dönen ürünleri ana state'e aktarıyoruz
+      setProducts(response.data);
       
-      setProducts(mockProducts);
+      // Başarı mesajını sohbet ekranına ekliyoruz
+      const responseMessage = response.data.length > 0
+        ? `Size ${response.data.length} özel ürün bulundu! Sağ panelde görebilirsiniz.`
+        : "Bu isteğinize uygun bir ürün bulamadım, başka bir şey denemek ister misiniz?";
+      
+      setMessages(prev => [...prev, { sender: 'ai', text: responseMessage }]);
+
+    } catch (err) {
+      // Hata olursa, kullanıcıya bir hata mesajı gösteriyoruz
+      const errorMessage = "Üzgünüm, öneri getirirken bir hata oluştu. Lütfen tekrar deneyin.";
+      setError(errorMessage);
+      console.error("API isteği sırasında hata:", err); // Hatayı konsola yazdırıyoruz
+    } finally {
+      // İşlem başarılı da olsa, başarısız da olsa yüklenme durumunu bitiriyoruz
       setIsLoading(false);
-      setMessages(prev => [...prev, { sender: 'ai', text: "Size 5 özel ürün bulundu! Sağ panelde görebilirsiniz." }]);
-    }, 1000);
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -151,4 +131,4 @@ function ChatPanel({ setProducts }) {
   );
 }
 
-export default ChatPanel; 
+export default ChatPanel;
