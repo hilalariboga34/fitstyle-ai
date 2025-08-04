@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordRequestForm
 from typing import List
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
@@ -231,12 +231,12 @@ def register(user: UserCreate, db: Session = Depends(get_db_session)):
         raise HTTPException(status_code=500, detail=f"Kayıt işlemi başarısız: {str(e)}")
 
 @app.post("/login", response_model=Token)
-def login(user_credentials: UserLogin, db: Session = Depends(get_db_session)):
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db_session)):
     """
     Kullanıcı girişi yapar ve JWT token döndürür.
     
     Args:
-        user_credentials (UserLogin): Kullanıcı giriş bilgileri (email, password)
+        form_data (OAuth2PasswordRequestForm): Kullanıcı giriş bilgileri (username, password)
         db (Session): SQLAlchemy veritabanı oturumu
         
     Returns:
@@ -246,14 +246,14 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db_session)):
         HTTPException: Email veya şifre yanlışsa
     """
     try:
-        # Kullanıcıyı email ile bul
-        user = db.query(UserModel).filter(UserModel.email == user_credentials.email).first()
+        # Kullanıcıyı email ile bul (username alanı email olarak kullanılıyor)
+        user = db.query(UserModel).filter(UserModel.email == form_data.username).first()
         
         if not user:
             raise HTTPException(status_code=401, detail="Email veya şifre yanlış")
         
         # Şifreyi doğrula
-        if not verify_password(user_credentials.password, user.hashed_password):
+        if not verify_password(form_data.password, user.hashed_password):
             raise HTTPException(status_code=401, detail="Email veya şifre yanlış")
         
         # JWT token oluştur
