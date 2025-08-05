@@ -1,13 +1,55 @@
 import React from "react";
+import axios from "axios";
 
 function ProductGrid({ products, setProducts }) {
+  const handleFavoriteClick = async (productId) => {
+    // Token'ı localStorage'dan al
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      // Token yoksa hiçbir şey yapma veya kullanıcıyı giriş sayfasına yönlendir
+      alert('Favori eklemek için giriş yapmanız gerekiyor.');
+      return;
+    }
+
+    try {
+      // Favori ekleme isteği gönder
+      const response = await axios.post('http://localhost:8000/favorites', 
+        { product_id: productId },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      // Başarılı olursa onay mesajı göster
+      alert('Ürün favorilere eklendi!');
+      
+      // İsteğe bağlı: İkonun rengini değiştir veya başka bir görsel geri bildirim
+      console.log('Favori eklendi:', response.data);
+      
+    } catch (error) {
+      if (error.response && error.response.data && error.response.data.detail) {
+        alert(`Hata: ${error.response.data.detail}`);
+      } else {
+        alert('Favori eklenirken bir hata oluştu.');
+      }
+    }
+  };
+
   if (!products || products.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-center">
-          <div className="text-gray-400 text-6xl mb-4">🛍️</div>
-          <div className="text-xl text-gray-600 font-medium">Henüz ürün önerilmedi</div>
-          <div className="text-sm text-gray-500 mt-2">Sohbet panelinden bir mesaj gönderin</div>
+          <div className="w-20 h-20 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+          </div>
+          <div className="text-xl text-gray-600 font-medium mb-2">Henüz ürün önerilmedi</div>
+          <div className="text-sm text-gray-500">Sohbet panelinden bir mesaj gönderin</div>
         </div>
       </div>
     );
@@ -18,13 +60,16 @@ function ProductGrid({ products, setProducts }) {
       {products.map((product) => (
         <div 
           key={product.id} 
-          className="bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 p-6 flex flex-col relative"
+          className="glass border border-white/30 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 p-6 flex flex-col relative card-hover group"
         >
           {/* Kalp İkonu - Sağ Üst Köşe */}
           <div className="absolute top-4 right-4 z-10">
-            <button className="w-8 h-8 bg-white bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all duration-200 shadow-sm hover:shadow-md">
+            <button 
+              onClick={() => handleFavoriteClick(product.id)}
+              className="w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white hover:scale-110 transition-all duration-300 shadow-lg hover:shadow-xl group-hover:bg-white"
+            >
               <svg 
-                className="w-5 h-5 text-gray-400 hover:text-red-500 transition-colors duration-200" 
+                className="w-5 h-5 text-gray-400 hover:text-red-500 transition-colors duration-300" 
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
@@ -40,30 +85,34 @@ function ProductGrid({ products, setProducts }) {
           </div>
 
           {/* Ürün resmi */}
-          <div className="w-full h-48 mb-4 rounded-lg overflow-hidden bg-gray-100">
+          <div className="w-full h-48 mb-6 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 group-hover:shadow-lg transition-all duration-300">
             {product.image_url ? (
               <img 
                 src={product.image_url} 
                 alt={product.name}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 onError={(e) => {
                   e.target.style.display = 'none';
                   e.target.nextSibling.style.display = 'flex';
                 }}
               />
             ) : null}
-            <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-lg font-bold" style={{ display: product.image_url ? 'none' : 'flex' }}>
-              Resim
+            <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl flex items-center justify-center text-gray-400 text-lg font-bold" style={{ display: product.image_url ? 'none' : 'flex' }}>
+              <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
             </div>
           </div>
           
           {/* Ürün bilgileri */}
           <div className="flex-1 flex flex-col">
-            <h3 className="text-lg font-semibold mb-2 text-gray-800 line-clamp-2">{product.name}</h3>
-            <p className="text-sm text-gray-600 mb-4 flex-1 line-clamp-3">{product.description}</p>
-            <div className="flex justify-between items-center">
-              <span className="text-xl font-bold text-blue-600">₺{product.price}</span>
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{product.category}</span>
+            <h3 className="text-lg font-bold mb-3 text-gray-800 line-clamp-2 group-hover:text-gray-900 transition-colors duration-300">{product.name}</h3>
+            <p className="text-sm text-gray-600 mb-4 flex-1 line-clamp-3 leading-relaxed">{product.description}</p>
+            <div className="flex justify-between items-center pt-4 border-t border-white/30">
+              <span className="text-xl font-bold gradient-text">₺{product.price}</span>
+              <span className="text-xs text-gray-600 bg-white/50 backdrop-blur-sm px-3 py-2 rounded-full font-medium border border-white/30">
+                {product.category}
+              </span>
             </div>
           </div>
         </div>

@@ -10,5 +10,5 @@ class Product(BaseModel):
     image_url: Optional[str] = None # image_url'i opsiyonel yapıyoruz
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
