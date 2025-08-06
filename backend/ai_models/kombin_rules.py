@@ -43,5 +43,26 @@ ANAHTAR_KELİMELER = {
     'malzemeler': ['deri', 'kadife', 'kot', 'saten', 'yün', 'keten'],
     'renkler': ['siyah', 'beyaz', 'gri', 'mavi', 'yeşil', 'kırmızı', 'pembe', 'bordo', 'bej', 'krem', 'kahverengi'],
     'belirsiz_ifadeler': ['bir şey', 'bir şeyler', 'bir kıyafet', 'ne giysem'],
-    'kombin_sorulari': ['ile ne giyebilirim', 'ile ne giyilir', 'nasıl kombinlenir', 'nasıl kombinlerim']
+    'kombin_sorulari': ['ile ne giyebilirim', 'ile ne giyilir', 'nasıl kombinlenir', 'nasıl kombinlerim'],
+    'alakasiz_konular': [
+        # Spor/Futbol
+        'galatasaray', 'fenerbahçe', 'beşiktaş', 'trabzonspor', 'transfer', 'futbol', 'maç', 'lig', 'şampiyonluk',
+        'ossimhen', 'icardi', 'drogba', 'ronaldo', 'messi', 'neymar', 'mbappe', 'haaland',
+        # Siyaset
+        'cumhurbaşkanı', 'başbakan', 'bakan', 'parti', 'seçim', 'oy', 'siyaset', 'politika','ekonomi','türkiye'
+        # Teknoloji
+        'iphone', 'samsung', 'android', 'ios', 'bilgisayar', 'laptop', 'tablet', 'yazılım', 'programlama', 'teknoloji',
+        # Sağlık
+        'hastalık', 'doktor', 'hastane', 'ilaç', 'tedavi', 'ameliyat', 'kanser', 'diabet', 'kalp', 'sağlık','kilo',
+        # Eğitim
+        'üniversite', 'okul', 'sınav', 'öğretmen', 'öğrenci', 'ders', 'matematik', 'fizik', 'kimya', 'eğitim',
+        # İş/Dünya/Ekonomi
+        'şirket', 'iş', 'maaş', 'kariyer', 'ekonomi', 'para', 'enflasyon', 'faiz', 'döviz', 'işsizlik', 'borsa', 'dolar', 'euro', 'altın',
+        # Eğlence
+        'film', 'dizi', 'oyun', 'müzik', 'şarkı', 'sanatçı', 'aktör', 'aktris', 'yönetmen',
+        # Yemek
+        'yemek', 'restoran', 'mutfak', 'tarif', 'pişirme', 'şef', 'gastronomi',
+        # Seyahat
+        'tatil', 'otel', 'uçak', 'seyahat', 'turizm', 'gezi', 'ülke', 'şehir'
+    ]
 }

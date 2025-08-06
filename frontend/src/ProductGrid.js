@@ -1,14 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
 import axios from "axios";
 
 function ProductGrid({ products, setProducts }) {
+  const [favoriteStates, setFavoriteStates] = useState({});
+
   const handleFavoriteClick = async (productId) => {
     // Token'ı localStorage'dan al
     const token = localStorage.getItem('token');
     
     if (!token) {
-      // Token yoksa hiçbir şey yapma veya kullanıcıyı giriş sayfasına yönlendir
-      alert('Favori eklemek için giriş yapmanız gerekiyor.');
+      // Token yoksa kullanıcıyı giriş sayfasına yönlendir
+      const shouldLogin = window.confirm('Favori eklemek için giriş yapmanız gerekiyor. Giriş sayfasına yönlendirilsin mi?');
+      if (shouldLogin) {
+        window.location.href = '/login';
+      }
       return;
     }
 
@@ -24,14 +29,24 @@ function ProductGrid({ products, setProducts }) {
         }
       );
       
-      // Başarılı olursa onay mesajı göster
+      // Başarılı olursa kalp ikonunu kırmızı yap
+      setFavoriteStates(prev => ({
+        ...prev,
+        [productId]: true
+      }));
+      
+      // Başarı mesajı göster
       alert('Ürün favorilere eklendi!');
       
-      // İsteğe bağlı: İkonun rengini değiştir veya başka bir görsel geri bildirim
       console.log('Favori eklendi:', response.data);
       
     } catch (error) {
-      if (error.response && error.response.data && error.response.data.detail) {
+      if (error.response && error.response.status === 401) {
+        // Token geçersiz veya süresi dolmuş
+        localStorage.removeItem('token'); // Geçersiz token'ı sil
+        alert('Oturumunuzun süresi dolmuş. Lütfen tekrar giriş yapın.');
+        window.location.href = '/login';
+      } else if (error.response && error.response.data && error.response.data.detail) {
         alert(`Hata: ${error.response.data.detail}`);
       } else {
         alert('Favori eklenirken bir hata oluştu.');
@@ -69,8 +84,12 @@ function ProductGrid({ products, setProducts }) {
               className="w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white hover:scale-110 transition-all duration-300 shadow-lg hover:shadow-xl group-hover:bg-white"
             >
               <svg 
-                className="w-5 h-5 text-gray-400 hover:text-red-500 transition-colors duration-300" 
-                fill="none" 
+                className={`w-5 h-5 transition-colors duration-300 ${
+                  favoriteStates[product.id] 
+                    ? 'text-red-500 fill-current' 
+                    : 'text-gray-400 hover:text-red-500'
+                }`}
+                fill={favoriteStates[product.id] ? 'currentColor' : 'none'}
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
               >

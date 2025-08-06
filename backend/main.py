@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordRequestForm
+from fastapi.responses import JSONResponse
 from typing import List
 from sqlalchemy.orm import Session
 from sqlalchemy import or_  # Bu satır önemli
@@ -29,7 +30,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # JWT ayarları
 SECRET_KEY = "your-secret-key-here"  # Güvenlik için değiştirin
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 43200  # 30 gün (30 * 24 * 60 = 43200 dakika)
 
 # JWT token oluşturma fonksiyonu
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -37,7 +38,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.utcnow() + timedelta(minutes=43200)  # 30 gün
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -708,6 +709,7 @@ def register(user: UserCreate, db: Session = Depends(get_db_session)):
         return new_user
         
     except HTTPException:
+        # HTTPException'ı tekrar fırlat
         raise
     except Exception as e:
         db.rollback()
@@ -842,6 +844,10 @@ def recommend_products(request: RecommendationRequest, db: Session = Depends(get
             cinsiyet="kadin"
         )
         
+        # Alakasızlık kontrolü
+        if intent_result.get('alakasiz'):
+            return JSONResponse(status_code=422, content={"message": intent_result['message']})
+        
         logger.info(f"AI sonucu: {intent_result}")
         logger.info(f"AI style listesi: {intent_result.get('style', [])}")
         logger.info(f"AI type listesi: {intent_result.get('type', [])}")
@@ -859,6 +865,20 @@ def recommend_products(request: RecommendationRequest, db: Session = Depends(get
         if intent_result.get('style'):
             stil = intent_result['style'][0].lower()
             logger.info(f"AI modülünden gelen stil: {intent_result['style']}")
+
+        # Eğer stil 'spor' ise, rahat ve sportif tüm ürünleri öner
+        if stil == 'spor':
+            spor_anahtar_kelimeler = [
+                'tişört', 'eşofman', 'sweatshirt', 'hoodie', 'sneaker', 'spor ayakkabı', 'şort', 'tayt', 'spor', 'atlet'
+            ]
+            spor_urunleri = []
+            for product in db.query(ProductModel).all():
+                product_text = f"{product.name} {product.description} {product.category}".lower()
+                if any(k in product_text for k in spor_anahtar_kelimeler):
+                    spor_urunleri.append(product)
+            if spor_urunleri:
+                logger.info(f"{len(spor_urunleri)} adet spor tarzı ürün bulundu")
+                return spor_urunleri
         
         # Kategori tespiti
         kategori = None

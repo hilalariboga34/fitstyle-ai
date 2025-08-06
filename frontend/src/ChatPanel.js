@@ -554,14 +554,20 @@ const ChatPanel = ({ setProducts }) => {
 
     } catch (error) {
       console.error('Öneri alınırken hata:', error);
-      
+      let content = 'Üzgünüm, şu anda öneri alamıyorum. Lütfen daha sonra tekrar deneyin.';
+      if (error.response && error.response.data) {
+        if (error.response.data.message) {
+          content = error.response.data.message;
+        } else if (error.response.data.detail) {
+          content = error.response.data.detail;
+        }
+      }
       const errorMessage = {
         id: Date.now() + 1,
         type: 'bot',
-        content: 'Üzgünüm, şu anda öneri alamıyorum. Lütfen daha sonra tekrar deneyin.',
+        content,
         timestamp: new Date()
       };
-
       setChatHistory(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);

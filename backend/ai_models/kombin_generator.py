@@ -11,9 +11,20 @@ def get_category_of_item(item, kategoriler_dict):
     return None
 
 def generate_kombin_recipe(cumle, anahtar_kelimeler_dict, kombin_kurallari_dict, kategoriler_dict, renk_uyumu_dict, cinsiyet="kadin"):
-    clean_cumle = re.sub(r'[^\w\s]', '', cumle.lower())
+    clean_cumle = re.sub(r'[^ -ÿ\w\s]', '', cumle.lower())
     
     niyet = {'style': [], 'type': [], 'material': [], 'color': []}
+
+    # --- Alakasızlık kontrolü ---
+    moda_kelimeleri = anahtar_kelimeler_dict.get('moda_iliskili_kelimeler', [])
+    alakasiz_konular = anahtar_kelimeler_dict.get('alakasiz_konular', [])
+    alakasiz_soru_kelimeleri = anahtar_kelimeler_dict.get('alakasiz_soru_kelimeleri', [])
+
+    if (not any(moda_kelime in clean_cumle for moda_kelime in moda_kelimeleri)) or \
+       (any(alakasiz in clean_cumle for alakasiz in alakasiz_konular) or any(alakasiz_soru in clean_cumle for alakasiz_soru in alakasiz_soru_kelimeleri)):
+        niyet['alakasiz'] = True
+        niyet['message'] = 'Üzgünüm, ben sadece modaya ait soruları cevaplayabilirim. Modaya ait soruları sorabilirsiniz.'
+        return niyet
 
     # 1. Niyet Tespiti (ÖNCELİKLENDİRİLMİŞ YÖNTEM)
     

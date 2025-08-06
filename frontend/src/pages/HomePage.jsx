@@ -23,7 +23,33 @@ const HomePage = () => {
   // Kullanıcı giriş durumunu kontrol et
   useEffect(() => {
     const token = localStorage.getItem('token');
-    setIsLoggedIn(!!token);
+    
+    // Test için: Token yoksa otomatik giriş yap
+    if (!token) {
+      console.log('Token bulunamadı, test kullanıcısı ile otomatik giriş yapılıyor...');
+      
+      // Test kullanıcısı ile otomatik giriş
+      fetch('http://localhost:8000/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'username=test@test.com&password=test123'
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.access_token) {
+          localStorage.setItem('token', data.access_token);
+          setIsLoggedIn(true);
+          console.log('Otomatik giriş başarılı!');
+        }
+      })
+      .catch(error => {
+        console.error('Otomatik giriş başarısız:', error);
+      });
+    } else {
+      setIsLoggedIn(true);
+    }
   }, []);
 
   const handleLogout = () => {
@@ -59,14 +85,30 @@ const HomePage = () => {
 
   // Filtreleme fonksiyonu
   const filteredProducts = products.filter(product => {
-    // Stil filtresi
-    if (selectedFilters.style && product.category.toLowerCase() !== selectedFilters.style.toLowerCase()) {
-      return false;
+    const productText = `${product.name} ${product.description} ${product.category}`.toLowerCase();
+    
+    // Stil filtresi - ürün açıklamasında stil aranıyor
+    if (selectedFilters.style && selectedFilters.style !== "") {
+      const styleLower = selectedFilters.style.toLowerCase();
+      if (!productText.includes(styleLower)) {
+        return false;
+      }
     }
     
-    // Renk filtresi
-    if (selectedFilters.color && !product.name.toLowerCase().includes(selectedFilters.color.toLowerCase())) {
-      return false;
+    // Renk filtresi - hem ad hem açıklamada renk aranıyor
+    if (selectedFilters.color && selectedFilters.color !== "") {
+      const colorLower = selectedFilters.color.toLowerCase();
+      if (!productText.includes(colorLower)) {
+        return false;
+      }
+    }
+    
+    // Mevsim filtresi - ürün açıklamasında mevsim aranıyor
+    if (selectedFilters.season && selectedFilters.season !== "") {
+      const seasonLower = selectedFilters.season.toLowerCase();
+      if (!productText.includes(seasonLower)) {
+        return false;
+      }
     }
     
     // Fiyat filtresi
@@ -77,7 +119,10 @@ const HomePage = () => {
     return true;
   });
 
+  console.log('Filtrelenmiş ürün sayısı:', filteredProducts.length, 'Toplam ürün:', products.length);
+
   const handleFilterChange = (filters) => {
+    console.log('Filtreler değişti:', filters);
     setSelectedFilters(filters);
   };
 
