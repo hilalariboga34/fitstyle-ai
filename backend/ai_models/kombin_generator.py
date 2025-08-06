@@ -20,8 +20,14 @@ def generate_kombin_recipe(cumle, anahtar_kelimeler_dict, kombin_kurallari_dict,
     alakasiz_konular = anahtar_kelimeler_dict.get('alakasiz_konular', [])
     alakasiz_soru_kelimeleri = anahtar_kelimeler_dict.get('alakasiz_soru_kelimeleri', [])
 
-    if (not any(moda_kelime in clean_cumle for moda_kelime in moda_kelimeleri)) or \
-       (any(alakasiz in clean_cumle for alakasiz in alakasiz_konular) or any(alakasiz_soru in clean_cumle for alakasiz_soru in alakasiz_soru_kelimeleri)):
+    # Moda ile ilgili kelime var mı kontrol et
+    moda_iliskili_kelime_var = any(moda_kelime in clean_cumle for moda_kelime in moda_kelimeleri)
+    
+    # Alakasız konu var mı kontrol et
+    alakasiz_konu_var = any(alakasiz in clean_cumle for alakasiz in alakasiz_konular)
+    
+    # Eğer alakasız konu varsa ve moda ile ilgili kelime yoksa, alakasız kabul et
+    if alakasiz_konu_var and not moda_iliskili_kelime_var:
         niyet['alakasiz'] = True
         niyet['message'] = 'Üzgünüm, ben sadece modaya ait soruları cevaplayabilirim. Modaya ait soruları sorabilirsiniz.'
         return niyet

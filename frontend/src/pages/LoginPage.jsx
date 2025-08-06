@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import { loginUser } from '../api';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -15,25 +15,19 @@ const LoginPage = () => {
     setError(null);
     setIsLoading(true);
 
-    // FastAPI'nin OAuth2 standardı form verisi bekler
-    const params = new URLSearchParams();
-    params.append('username', email);
-    params.append('password', password);
-
     try {
-      const response = await axios.post('http://localhost:8000/login', params, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
+      const response = await loginUser({
+        email: email,
+        password: password
       });
 
-      if (response.data.access_token) {
-        localStorage.setItem('token', response.data.access_token);
+      if (response.access_token) {
+        localStorage.setItem('token', response.access_token);
         navigate('/'); // Ana sayfaya yönlendir
         window.location.reload(); // Sayfanın yenilenerek header'ın güncellenmesini sağla
       }
     } catch (err) {
-      setError("Giriş bilgileri hatalı. Lütfen kontrol edip tekrar deneyin.");
+      setError(err.message || "Giriş bilgileri hatalı. Lütfen kontrol edip tekrar deneyin.");
       console.error("Login error:", err);
     } finally {
       setIsLoading(false);

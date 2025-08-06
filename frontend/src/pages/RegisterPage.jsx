@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { registerUser } from '../api';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -50,7 +50,7 @@ const RegisterPage = () => {
 
     try {
       // Backend'e kayıt isteği gönder
-      const response = await axios.post('http://localhost:8000/register', {
+      const response = await registerUser({
         email: formData.email,
         password: formData.password
       });
@@ -63,11 +63,7 @@ const RegisterPage = () => {
       }, 2000);
       
     } catch (err) {
-      if (err.response && err.response.data && err.response.data.detail) {
-        setError(err.response.data.detail);
-      } else {
-        setError('Kayıt olurken bir hata oluştu. Lütfen tekrar deneyin.');
-      }
+      setError(err.message || 'Kayıt olurken bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setIsLoading(false);
     }

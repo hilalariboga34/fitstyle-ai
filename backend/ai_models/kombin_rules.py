@@ -44,6 +44,24 @@ ANAHTAR_KELİMELER = {
     'renkler': ['siyah', 'beyaz', 'gri', 'mavi', 'yeşil', 'kırmızı', 'pembe', 'bordo', 'bej', 'krem', 'kahverengi'],
     'belirsiz_ifadeler': ['bir şey', 'bir şeyler', 'bir kıyafet', 'ne giysem'],
     'kombin_sorulari': ['ile ne giyebilirim', 'ile ne giyilir', 'nasıl kombinlenir', 'nasıl kombinlerim'],
+    'moda_iliskili_kelimeler': [
+        # Genel moda terimleri
+        'moda', 'stil', 'kombin', 'giyim', 'kıyafet', 'elbise', 'gömlek', 'pantolon', 'etek', 'ceket', 'hırka', 'kazak', 'tişört', 'bluz',
+        'ayakkabı', 'çanta', 'aksesuar', 'takı', 'şapka', 'gözlük', 'kemer', 'çorap', 'çorap', 'iç çamaşırı',
+        # Renkler
+        'siyah', 'beyaz', 'gri', 'mavi', 'yeşil', 'kırmızı', 'pembe', 'bordo', 'bej', 'krem', 'kahverengi', 'sarı', 'turuncu', 'mor', 'lacivert',
+        # Stil terimleri
+        'rahat', 'şık', 'spor', 'ofis', 'günlük', 'klasik', 'elegant', 'vintage', 'casual', 'minimalist', 'modern', 'romantik', 'rock', 'preppy',
+        # Malzeme terimleri
+        'deri', 'kadife', 'kot', 'saten', 'yün', 'keten', 'ipek', 'polyester', 'akrilik',
+        # Durum terimleri
+        'giy', 'giysem', 'giyeyim', 'giyeyim', 'kombinle', 'kombinlenir', 'uyumlu', 'şık', 'güzel', 'yakışır',
+        # Soru kelimeleri
+        'ne', 'nasıl', 'hangi', 'hangisi', 'öner', 'öneri', 'tavsiye', 'yardım'
+    ],
+    'alakasiz_soru_kelimeleri': [
+        'nasıl yapılır', 'nasıl çalışır', 'nasıl olur', 'neden', 'niçin', 'kim', 'nerede', 'ne zaman', 'kaç', 'kaç tane'
+    ],
     'alakasiz_konular': [
         # Spor/Futbol
         'galatasaray', 'fenerbahçe', 'beşiktaş', 'trabzonspor', 'transfer', 'futbol', 'maç', 'lig', 'şampiyonluk',

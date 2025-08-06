@@ -1,6 +1,74 @@
+const API_BASE_URL = 'http://localhost:8000';
+
+// Kullanıcı kayıt işlemi
+export async function registerUser(userData) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: userData.email,
+        password: userData.password
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Kayıt işlemi başarısız');
+    }
+
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+}
+
+// Kullanıcı giriş işlemi
+export async function loginUser(credentials) {
+  try {
+    const formData = new FormData();
+    formData.append('username', credentials.email);
+    formData.append('password', credentials.password);
+
+    const response = await fetch(`${API_BASE_URL}/login`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Giriş işlemi başarısız');
+    }
+
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+}
+
+// Ürünleri getir
 export async function fetchProducts() {
-  // Mock data kullanılıyor (backend çalışmadığı için)
-  console.log("Mock data kullanılıyor...");
+  try {
+    const response = await fetch(`${API_BASE_URL}/products`);
+    
+    if (!response.ok) {
+      console.log("Backend'den ürünler alınamadı, mock data kullanılıyor...");
+      // Backend çalışmıyorsa mock data döndür
+      return getMockProducts();
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.log("API hatası:", error);
+    console.log("Mock data kullanılıyor...");
+    return getMockProducts();
+  }
+}
+
+// Mock ürün verileri (fallback için)
+function getMockProducts() {
   return [
     {
       id: 1,
